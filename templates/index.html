@@ -308,6 +308,34 @@
             transition: opacity 0.3s;
         }
         .toast.show { opacity: 1; }
+
+        /* Link button on missions */
+        .mission-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.7rem;
+        }
+        .mission-actions a, .mission-actions button {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-open-link {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        .btn-open-link:hover { opacity: 0.85; }
+        .btn-gen-docs {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--accent) !important;
+        }
     </style>
 </head>
 <body>
@@ -551,8 +579,9 @@ async function launchSearch() {
         listEl.innerHTML = data.missions.map(m => {
             const scoreClass = m.score >= 70 ? 'score-high' : m.score >= 40 ? 'score-mid' : 'score-low';
             const budget = m.budget_max ? `${m.budget_min}-${m.budget_max}\u20ac/j` : '';
+            const hasUrl = m.url && m.url.startsWith('http');
             return `
-                <div class="mission-card" onclick="generateDocs(${m.index})">
+                <div class="mission-card">
                     <div class="top">
                         <div class="title">${m.title}</div>
                         <span class="score-badge ${scoreClass}">${m.score}%</span>
@@ -565,6 +594,10 @@ async function launchSearch() {
                         ${m.duration ? `<span class="meta-tag">${m.duration}</span>` : ''}
                     </div>
                     ${m.description ? `<div class="desc">${m.description.substring(0, 150)}...</div>` : ''}
+                    <div class="mission-actions">
+                        ${hasUrl ? `<a href="${m.url}" target="_blank" class="btn-open-link" onclick="event.stopPropagation();">Voir l'offre</a>` : ''}
+                        <button class="btn-gen-docs" onclick="generateDocs(${m.index})">G&eacute;n&eacute;rer candidature</button>
+                    </div>
                 </div>
             `;
         }).join('');

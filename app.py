@@ -29,6 +29,7 @@ from freelance_hunter.models import (
 )
 from freelance_hunter.scrapers import (
     FreelanceComScraper,
+    FreelanceInfoScraper,
     IndeedFreelanceScraper,
     LinkedInScraper,
     MaltScraper,
@@ -62,6 +63,7 @@ def api_search():
     scrapers = [
         MaltScraper(),
         FreelanceComScraper(),
+        FreelanceInfoScraper(),
         IndeedFreelanceScraper(),
         LinkedInScraper(),
     ]

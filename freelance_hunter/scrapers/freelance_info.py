@@ -1,4 +1,4 @@
-"""Scraper pour Freelance.com — vraies offres avec liens."""
+"""Scraper pour Freelance-info.fr — référence des missions IT en France."""
 
 from __future__ import annotations
 
@@ -18,13 +18,13 @@ from .base import BaseScraper
 logger = logging.getLogger(__name__)
 
 
-class FreelanceComScraper(BaseScraper):
-    PLATFORM_NAME = "Freelance.com"
-    BASE_URL = "https://www.free-work.com"  # Freelance.com est devenu Free-Work
+class FreelanceInfoScraper(BaseScraper):
+    PLATFORM_NAME = "Freelance-info"
+    BASE_URL = "https://www.freelance-info.fr"
 
     def search(self, profile: FreelanceProfile, max_results: int = 20) -> list[Mission]:
         for term in self._get_search_terms(profile):
-            url = f"{self.BASE_URL}/fr/tech-it/jobs?query={quote_plus(term)}&contracts=contractor"
+            url = f"{self.BASE_URL}/missions-freelances?query={quote_plus(term)}"
             response = self._get(url)
             if response:
                 missions = self._parse_results(response.text)
@@ -34,7 +34,7 @@ class FreelanceComScraper(BaseScraper):
         return self._build_real_search_links(profile, max_results)
 
     def _build_search_url(self, profile: FreelanceProfile) -> str:
-        return f"{self.BASE_URL}/fr/tech-it/jobs?query={quote_plus(self._build_keywords(profile))}&contracts=contractor"
+        return f"{self.BASE_URL}/missions-freelances?query={quote_plus(self._build_keywords(profile))}"
 
     def _get_search_terms(self, profile: FreelanceProfile) -> list[str]:
         terms = [self._build_keywords(profile), profile.title]
@@ -46,10 +46,10 @@ class FreelanceComScraper(BaseScraper):
         soup = BeautifulSoup(html, "html.parser")
         missions = []
 
-        cards = soup.select("[class*='job-card'], [class*='JobCard'], article, [class*='search-result'], [class*='listing']")
+        cards = soup.select("div.mission-list__item, div[class*='mission'], article, .search-result, tr[class*='mission']")
         for card in cards:
-            link = card.select_one("a[href*='job'], a[href*='mission']")
-            title_el = card.select_one("h2, h3, [class*='title']")
+            link = card.select_one("a[href*='mission']")
+            title_el = card.select_one("h2, h3, .mission-title, a[class*='title']")
             if not title_el and link:
                 title_el = link
 
@@ -66,13 +66,12 @@ class FreelanceComScraper(BaseScraper):
                 if href and not href.startswith("http"):
                     href = self.BASE_URL + href
 
-            desc_el = card.select_one("p, [class*='desc'], [class*='snippet']")
-            company_el = card.select_one("[class*='company'], [class*='employer']")
-            location_el = card.select_one("[class*='location']")
+            desc_el = card.select_one("p, .mission-description, [class*='desc']")
+            location_el = card.select_one("[class*='location'], [class*='lieu']")
+            rate_el = card.select_one("[class*='rate'], [class*='tjm'], [class*='price']")
 
             missions.append(Mission(
                 title=title,
-                company=company_el.get_text(strip=True) if company_el else "",
                 description=desc_el.get_text(strip=True) if desc_el else "",
                 location=location_el.get_text(strip=True) if location_el else "",
                 source=self.PLATFORM_NAME,
@@ -87,9 +86,11 @@ class FreelanceComScraper(BaseScraper):
             profile.title,
             "Business Analyst",
             "Power BI",
-            "Excel VBA",
             "FP&A",
+            "Excel VBA",
             "Data Analyst",
+            "Alteryx",
+            "SAP Finance",
         ]
         missions = []
         seen = set()
@@ -99,11 +100,11 @@ class FreelanceComScraper(BaseScraper):
             if q.lower() in seen:
                 continue
             seen.add(q.lower())
-            real_url = f"{self.BASE_URL}/fr/tech-it/jobs?query={quote_plus(q)}&contracts=contractor"
+            real_url = f"{self.BASE_URL}/missions-freelances?query={quote_plus(q)}"
             missions.append(Mission(
-                title=f"Missions Free-Work : {q}",
-                company="Voir sur Free-Work.com",
-                description=f"Offres freelance « {q} » sur Free-Work (ex Freelance.com) — filtré sur les contrats freelance.",
+                title=f"Missions freelance : {q}",
+                company="Voir sur Freelance-info.fr",
+                description=f"Offres de missions freelance « {q} » sur Freelance-info.fr — la référence des missions IT en France.",
                 skills_required=profile.skills[:5],
                 source=self.PLATFORM_NAME,
                 url=real_url,

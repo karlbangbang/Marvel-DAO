@@ -1,0 +1,39 @@
+{
+  "name": "Jean Dupont",
+  "title": "Développeur Full Stack",
+  "skills": [
+    "Python",
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Node.js",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "AWS",
+    "Git"
+  ],
+  "experience_years": 7,
+  "experience_level": "senior",
+  "daily_rate_min": 500,
+  "daily_rate_max": 700,
+  "location": "Paris",
+  "remote_preference": "full_remote",
+  "languages": [
+    "Français",
+    "Anglais"
+  ],
+  "bio": "Développeur Full Stack senior passionné par la création d'applications web performantes et scalables. Expérience en startup et grands comptes.",
+  "portfolio_url": "https://jeandupont.dev",
+  "linkedin_url": "https://linkedin.com/in/jeandupont",
+  "certifications": [
+    "AWS Solutions Architect",
+    "Scrum Master"
+  ],
+  "industries": [
+    "FinTech",
+    "E-commerce",
+    "SaaS"
+  ],
+  "availability": "immédiate"
+}

@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreelanceHunter</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --accent: #38bdf8;
+            --accent2: #818cf8;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --text: #f1f5f9;
+            --text2: #94a3b8;
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--surface2);
+            padding: 1.2rem 1rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            font-size: 1.4rem;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p { font-size: 0.8rem; color: var(--text2); margin-top: 0.2rem; }
+
+        /* Steps nav */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            flex-wrap: wrap;
+        }
+        .step-dot {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--surface2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700;
+            transition: all 0.3s;
+        }
+        .step-dot.active { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+        .step-dot.done { border-color: var(--green); background: var(--green); color: var(--bg); }
+
+        /* Sections */
+        .section { display: none; padding: 0 1rem; max-width: 600px; margin: 0 auto; }
+        .section.active { display: block; }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        /* Forms */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; min-height: 70px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: var(--bg);
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-green {
+            background: linear-gradient(135deg, var(--green), #10b981);
+            color: var(--bg);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; width: auto; }
+
+        /* Loading */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .loader.active { display: block; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--surface2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Platform results */
+        .platform-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 0.2rem;
+        }
+        .platform-tag.ok { background: rgba(52, 211, 153, 0.15); color: var(--green); }
+        .platform-tag.fail { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+
+        /* Mission cards */
+        .mission-card {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mission-card:hover, .mission-card:active {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .mission-card .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .mission-card .title { font-weight: 700; font-size: 0.95rem; flex: 1; }
+        .score-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .score-high { background: rgba(52, 211, 153, 0.2); color: var(--green); }
+        .score-mid { background: rgba(251, 191, 36, 0.2); color: var(--yellow); }
+        .score-low { background: rgba(248, 113, 113, 0.2); color: var(--red); }
+        .mission-card .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text2);
+        }
+        .meta-tag {
+            background: var(--surface2);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+        .mission-card .desc {
+            margin-top: 0.5rem;
+            font-size: 0.82rem;
+            color: var(--text2);
+            line-height: 1.4;
+        }
+
+        /* Document viewer */
+        .doc-tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 0.4rem;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+        .doc-tab {
+            padding: 0.5rem 0.8rem;
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text2);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .doc-tab.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+        .doc-content {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: var(--radius);
+            padding: 1rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .doc-content .copy-btn {
+            float: right;
+            background: var(--surface2);
+            border: none;
+            color: var(--text);
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .doc-content .copy-btn:active { background: var(--green); color: var(--bg); }
+
+        /* Back button */
+        .back-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--green);
+            color: var(--bg);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Link button on missions */
+        .mission-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.7rem;
+        }
+        .mission-actions a, .mission-actions button {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-open-link {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        .btn-open-link:hover { opacity: 0.85; }
+        .btn-gen-docs {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--accent) !important;
+        }
+
+        /* Badge type offre */
+        .offer-type {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .offer-type.api { background: rgba(52, 211, 153, 0.2); color: var(--green); }
+        .offer-type.link { background: rgba(129, 140, 248, 0.2); color: var(--accent2); }
+
+        /* Section separator */
+        .section-sep {
+            text-align: center;
+            color: var(--text2);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+            padding: 0.5rem;
+            border-top: 1px solid var(--surface2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>FreelanceHunter</h1>
+    <p>Trouvez des missions &amp; g&eacute;n&eacute;rez vos candidatures</p>
+</div>
+
+<div class="steps">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-dot" id="dot-2">2</div>
+    <div class="step-dot" id="dot-3">3</div>
+</div>
+
+<!-- ═══ ÉTAPE 1 : PROFIL ═══ -->
+<div class="section active" id="section-profile">
+    <div class="section-title">Votre profil freelance</div>
+
+    <div class="form-group">
+        <label>Nom complet</label>
+        <input type="text" id="name" placeholder="Jean Dupont">
+    </div>
+
+    <div class="form-group">
+        <label>Titre / M&eacute;tier</label>
+        <input type="text" id="title" placeholder="D&eacute;veloppeur Full Stack">
+    </div>
+
+    <div class="form-group">
+        <label>Comp&eacute;tences (s&eacute;par&eacute;es par virgules)</label>
+        <input type="text" id="skills" placeholder="Python, React, Node.js, Docker, SQL">
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Ann&eacute;es d'exp.</label>
+            <input type="number" id="experience_years" value="5" min="0">
+        </div>
+        <div class="form-group">
+            <label>Niveau</label>
+            <select id="experience_level">
+                <option value="junior">Junior</option>
+                <option value="intermediate" selected>Interm&eacute;diaire</option>
+                <option value="senior">Senior</option>
+                <option value="expert">Expert</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>TJM Min (&euro;)</label>
+            <input type="number" id="daily_rate_min" value="400" min="0">
+        </div>
+        <div class="form-group">
+            <label>TJM Max (&euro;)</label>
+            <input type="number" id="daily_rate_max" value="600" min="0">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Localisation</label>
+            <input type="text" id="location" placeholder="Paris">
+        </div>
+        <div class="form-group">
+            <label>Remote</label>
+            <select id="remote_preference">
+                <option value="full_remote">Full remote</option>
+                <option value="hybride">Hybride</option>
+                <option value="sur_site">Sur site</option>
+                <option value="flexible">Flexible</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Bio courte</label>
+        <textarea id="bio" placeholder="D&eacute;crivez votre exp&eacute;rience en 2-3 phrases..."></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Langues</label>
+        <input type="text" id="languages" value="Fran&ccedil;ais, Anglais">
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Portfolio URL</label>
+            <input type="text" id="portfolio_url" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>LinkedIn URL</label>
+            <input type="text" id="linkedin_url" placeholder="https://linkedin.com/in/...">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Certifications</label>
+        <input type="text" id="certifications" placeholder="AWS, Scrum Master...">
+    </div>
+
+    <div class="form-group">
+        <label>Secteurs pr&eacute;f&eacute;r&eacute;s</label>
+        <input type="text" id="industries" placeholder="FinTech, SaaS, E-commerce...">
+    </div>
+
+    <div class="form-group">
+        <label>Disponibilit&eacute;</label>
+        <input type="text" id="availability" value="imm&eacute;diate">
+    </div>
+
+    <br>
+    <button class="btn btn-primary" onclick="launchSearch()">
+        Rechercher des missions
+    </button>
+</div>
+
+<!-- ═══ ÉTAPE 2 : RÉSULTATS ═══ -->
+<div class="section" id="section-results">
+    <div class="loader" id="search-loader">
+        <div class="spinner"></div>
+        <p>Recherche sur Malt, Freelance.com, Indeed, LinkedIn...</p>
+        <p style="font-size:0.8rem; color:var(--text2); margin-top:0.5rem;">Analyse et classement par matching</p>
+    </div>
+
+    <div id="results-content" style="display:none;">
+        <div class="back-row">
+            <button class="back-btn" onclick="goToStep(1)">&larr; Modifier profil</button>
+            <button class="btn btn-green btn-sm" onclick="downloadAll()">T&eacute;l&eacute;charger tout (ZIP)</button>
+        </div>
+
+        <div class="stats-bar" id="platform-stats"></div>
+
+        <div class="section-title" id="results-title">Missions trouv&eacute;es</div>
+        <div id="missions-list"></div>
+    </div>
+</div>
+
+<!-- ═══ ÉTAPE 3 : CANDIDATURE ═══ -->
+<div class="section" id="section-docs">
+    <div class="loader" id="gen-loader">
+        <div class="spinner"></div>
+        <p>G&eacute;n&eacute;ration de votre candidature...</p>
+    </div>
+
+    <div id="docs-content" style="display:none;">
+        <div class="back-row">
+            <button class="back-btn" onclick="goToStep(2)">&larr; Retour missions</button>
+        </div>
+
+        <div class="section-title" id="doc-mission-title"></div>
+
+        <div class="doc-tabs" id="doc-tabs"></div>
+        <div class="doc-content" id="doc-viewer"></div>
+
+        <br>
+        <button class="btn btn-outline btn-sm" onclick="copyDoc()" style="width:100%;">
+            Copier le document
+        </button>
+    </div>
+</div>
+
+<div class="toast" id="toast">Copi&eacute; !</div>
+
+<script>
+const DOC_LABELS = {
+    cover_letter: 'Lettre de motivation',
+    proposal: 'Proposition commerciale',
+    cv_summary: 'R&eacute;sum&eacute; CV',
+    email_body: 'Email candidature',
+    follow_up_email: 'Email relance',
+    linkedin_message: 'Message LinkedIn',
+    elevator_pitch: 'Elevator pitch',
+    negotiation_tips: 'N&eacute;gociation',
+    interview_prep: 'Pr&eacute;p entretien',
+};
+
+let currentDocs = {};
+let currentDocKey = 'cover_letter';
+let totalMissions = 0;
+
+function goToStep(n) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.step-dot').forEach(d => { d.classList.remove('active'); d.classList.remove('done'); });
+    for (let i = 1; i < n; i++) document.getElementById('dot-' + i).classList.add('done');
+    document.getElementById('dot-' + n).classList.add('active');
+
+    const sections = { 1: 'section-profile', 2: 'section-results', 3: 'section-docs' };
+    document.getElementById(sections[n]).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function getProfile() {
+    return {
+        name: document.getElementById('name').value,
+        title: document.getElementById('title').value,
+        skills: document.getElementById('skills').value,
+        experience_years: document.getElementById('experience_years').value,
+        experience_level: document.getElementById('experience_level').value,
+        daily_rate_min: document.getElementById('daily_rate_min').value,
+        daily_rate_max: document.getElementById('daily_rate_max').value,
+        location: document.getElementById('location').value,
+        remote_preference: document.getElementById('remote_preference').value,
+        bio: document.getElementById('bio').value,
+        languages: document.getElementById('languages').value,
+        portfolio_url: document.getElementById('portfolio_url').value,
+        linkedin_url: document.getElementById('linkedin_url').value,
+        certifications: document.getElementById('certifications').value,
+        industries: document.getElementById('industries').value,
+        availability: document.getElementById('availability').value,
+    };
+}
+
+async function launchSearch() {
+    goToStep(2);
+    document.getElementById('search-loader').classList.add('active');
+    document.getElementById('results-content').style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(getProfile()),
+        });
+        const data = await resp.json();
+
+        // Platform stats
+        const statsEl = document.getElementById('platform-stats');
+        statsEl.innerHTML = data.platforms.map(p =>
+            `<span class="platform-tag ${p.ok ? 'ok' : 'fail'}">${p.platform} : ${p.count}</span>`
+        ).join('');
+
+        // Séparer offres API et liens de recherche
+        totalMissions = data.missions.length;
+        const apiOffers = data.missions.filter(m => !m.is_direct_link);
+        const searchLinks = data.missions.filter(m => m.is_direct_link);
+
+        document.getElementById('results-title').innerHTML =
+            `<span style="color:var(--green)">${apiOffers.length} offres r\u00e9elles</span> + <span style="color:var(--accent2)">${searchLinks.length} liens de recherche</span>`;
+
+        const listEl = document.getElementById('missions-list');
+        let html = '';
+
+        // Offres réelles en premier
+        if (apiOffers.length > 0) {
+            html += `<div class="section-sep">OFFRES R\u00c9ELLES (via API)</div>`;
+            html += apiOffers.map(m => renderMissionCard(m, true)).join('');
+        }
+
+        // Puis liens de recherche
+        if (searchLinks.length > 0) {
+            html += `<div class="section-sep">LIENS DE RECHERCHE (cliquez pour voir sur la plateforme)</div>`;
+            html += searchLinks.map(m => renderMissionCard(m, false)).join('');
+        }
+
+        listEl.innerHTML = html;
+
+    } catch (e) {
+        alert('Erreur : ' + e.message);
+    }
+
+    document.getElementById('search-loader').classList.remove('active');
+    document.getElementById('results-content').style.display = 'block';
+}
+
+function renderMissionCard(m, isApi) {
+    const scoreClass = m.score >= 70 ? 'score-high' : m.score >= 40 ? 'score-mid' : 'score-low';
+    const budget = m.budget_max ? `${m.budget_min}-${m.budget_max}\u20ac/j` : '';
+    const hasUrl = m.url && m.url.startsWith('http');
+    const typeLabel = isApi
+        ? '<span class="offer-type api">Offre r\u00e9elle</span>'
+        : '<span class="offer-type link">Lien recherche</span>';
+    const linkLabel = isApi ? "Voir l'offre" : "Ouvrir sur la plateforme";
+
+    return `
+        <div class="mission-card">
+            <div class="top">
+                <div class="title">${m.title}</div>
+                <span class="score-badge ${scoreClass}">${m.score}%</span>
+            </div>
+            <div class="meta">
+                ${typeLabel}
+                <span class="meta-tag">${m.source}</span>
+                ${m.company ? `<span class="meta-tag">${m.company}</span>` : ''}
+                ${budget ? `<span class="meta-tag">${budget}</span>` : ''}
+                <span class="meta-tag">${m.remote.replace('_', ' ')}</span>
+                ${m.duration ? `<span class="meta-tag">${m.duration}</span>` : ''}
+                ${m.location ? `<span class="meta-tag">${m.location}</span>` : ''}
+            </div>
+            ${m.description ? `<div class="desc">${m.description.substring(0, 200)}</div>` : ''}
+            <div class="mission-actions">
+                ${hasUrl ? `<a href="${m.url}" target="_blank" class="btn-open-link" onclick="event.stopPropagation();">${linkLabel}</a>` : ''}
+                ${isApi ? `<button class="btn-gen-docs" onclick="generateDocs(${m.index})">G\u00e9n\u00e9rer candidature</button>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+async function generateDocs(missionIndex) {
+    goToStep(3);
+    document.getElementById('gen-loader').classList.add('active');
+    document.getElementById('docs-content').style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mission_index: missionIndex }),
+        });
+        const data = await resp.json();
+
+        document.getElementById('doc-mission-title').textContent =
+            `${data.mission_title} — ${data.company}`;
+
+        currentDocs = data.documents;
+        // Convert arrays to strings
+        if (Array.isArray(currentDocs.negotiation_tips)) {
+            currentDocs.negotiation_tips = currentDocs.negotiation_tips.map((t, i) => `${i+1}. ${t}`).join('\n\n');
+        }
+        if (Array.isArray(currentDocs.interview_prep)) {
+            currentDocs.interview_prep = currentDocs.interview_prep.map((t, i) => `${i+1}. ${t}`).join('\n\n');
+        }
+
+        // Build tabs
+        const tabsEl = document.getElementById('doc-tabs');
+        tabsEl.innerHTML = Object.keys(DOC_LABELS).map(key =>
+            `<div class="doc-tab ${key === 'cover_letter' ? 'active' : ''}"
+                 onclick="showDoc('${key}', this)">${DOC_LABELS[key]}</div>`
+        ).join('');
+
+        currentDocKey = 'cover_letter';
+        showDocContent('cover_letter');
+
+    } catch (e) {
+        alert('Erreur : ' + e.message);
+    }
+
+    document.getElementById('gen-loader').classList.remove('active');
+    document.getElementById('docs-content').style.display = 'block';
+}
+
+function showDoc(key, tabEl) {
+    currentDocKey = key;
+    document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+    if (tabEl) tabEl.classList.add('active');
+    showDocContent(key);
+}
+
+function showDocContent(key) {
+    const viewer = document.getElementById('doc-viewer');
+    const content = currentDocs[key] || 'Document non disponible';
+    viewer.textContent = content;
+}
+
+function copyDoc() {
+    const text = currentDocs[currentDocKey] || '';
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1500);
+    }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1500);
+    });
+}
+
+async function downloadAll() {
+    const count = Math.min(totalMissions, 5);
+    if (!confirm(`T\u00e9l\u00e9charger les candidatures pour les ${count} meilleures missions ?`)) return;
+
+    try {
+        const resp = await fetch('/api/generate-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count }),
+        });
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'candidatures_freelance.zip';
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        alert('Erreur t\u00e9l\u00e9chargement : ' + e.message);
+    }
+}
+</script>
+
+</body>
+</html>

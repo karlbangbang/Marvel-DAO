@@ -336,6 +336,30 @@
             color: var(--text);
             border: 1px solid var(--accent) !important;
         }
+
+        /* Badge type offre */
+        .offer-type {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .offer-type.api { background: rgba(52, 211, 153, 0.2); color: var(--green); }
+        .offer-type.link { background: rgba(129, 140, 248, 0.2); color: var(--accent2); }
+
+        /* Section separator */
+        .section-sep {
+            text-align: center;
+            color: var(--text2);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+            padding: 0.5rem;
+            border-top: 1px solid var(--surface2);
+        }
     </style>
 </head>
 <body>
@@ -570,37 +594,30 @@ async function launchSearch() {
             `<span class="platform-tag ${p.ok ? 'ok' : 'fail'}">${p.platform} : ${p.count}</span>`
         ).join('');
 
-        // Missions list
+        // Séparer offres API et liens de recherche
         totalMissions = data.missions.length;
-        document.getElementById('results-title').textContent =
-            `${totalMissions} missions trouv\u00e9es`;
+        const apiOffers = data.missions.filter(m => !m.is_direct_link);
+        const searchLinks = data.missions.filter(m => m.is_direct_link);
+
+        document.getElementById('results-title').innerHTML =
+            `<span style="color:var(--green)">${apiOffers.length} offres r\u00e9elles</span> + <span style="color:var(--accent2)">${searchLinks.length} liens de recherche</span>`;
 
         const listEl = document.getElementById('missions-list');
-        listEl.innerHTML = data.missions.map(m => {
-            const scoreClass = m.score >= 70 ? 'score-high' : m.score >= 40 ? 'score-mid' : 'score-low';
-            const budget = m.budget_max ? `${m.budget_min}-${m.budget_max}\u20ac/j` : '';
-            const hasUrl = m.url && m.url.startsWith('http');
-            return `
-                <div class="mission-card">
-                    <div class="top">
-                        <div class="title">${m.title}</div>
-                        <span class="score-badge ${scoreClass}">${m.score}%</span>
-                    </div>
-                    <div class="meta">
-                        <span class="meta-tag">${m.source}</span>
-                        ${m.company ? `<span class="meta-tag">${m.company}</span>` : ''}
-                        ${budget ? `<span class="meta-tag">${budget}</span>` : ''}
-                        <span class="meta-tag">${m.remote.replace('_', ' ')}</span>
-                        ${m.duration ? `<span class="meta-tag">${m.duration}</span>` : ''}
-                    </div>
-                    ${m.description ? `<div class="desc">${m.description.substring(0, 150)}...</div>` : ''}
-                    <div class="mission-actions">
-                        ${hasUrl ? `<a href="${m.url}" target="_blank" class="btn-open-link" onclick="event.stopPropagation();">Voir l'offre</a>` : ''}
-                        <button class="btn-gen-docs" onclick="generateDocs(${m.index})">G&eacute;n&eacute;rer candidature</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        let html = '';
+
+        // Offres réelles en premier
+        if (apiOffers.length > 0) {
+            html += `<div class="section-sep">OFFRES R\u00c9ELLES (via API)</div>`;
+            html += apiOffers.map(m => renderMissionCard(m, true)).join('');
+        }
+
+        // Puis liens de recherche
+        if (searchLinks.length > 0) {
+            html += `<div class="section-sep">LIENS DE RECHERCHE (cliquez pour voir sur la plateforme)</div>`;
+            html += searchLinks.map(m => renderMissionCard(m, false)).join('');
+        }
+
+        listEl.innerHTML = html;
 
     } catch (e) {
         alert('Erreur : ' + e.message);
@@ -608,6 +625,39 @@ async function launchSearch() {
 
     document.getElementById('search-loader').classList.remove('active');
     document.getElementById('results-content').style.display = 'block';
+}
+
+function renderMissionCard(m, isApi) {
+    const scoreClass = m.score >= 70 ? 'score-high' : m.score >= 40 ? 'score-mid' : 'score-low';
+    const budget = m.budget_max ? `${m.budget_min}-${m.budget_max}\u20ac/j` : '';
+    const hasUrl = m.url && m.url.startsWith('http');
+    const typeLabel = isApi
+        ? '<span class="offer-type api">Offre r\u00e9elle</span>'
+        : '<span class="offer-type link">Lien recherche</span>';
+    const linkLabel = isApi ? "Voir l'offre" : "Ouvrir sur la plateforme";
+
+    return `
+        <div class="mission-card">
+            <div class="top">
+                <div class="title">${m.title}</div>
+                <span class="score-badge ${scoreClass}">${m.score}%</span>
+            </div>
+            <div class="meta">
+                ${typeLabel}
+                <span class="meta-tag">${m.source}</span>
+                ${m.company ? `<span class="meta-tag">${m.company}</span>` : ''}
+                ${budget ? `<span class="meta-tag">${budget}</span>` : ''}
+                <span class="meta-tag">${m.remote.replace('_', ' ')}</span>
+                ${m.duration ? `<span class="meta-tag">${m.duration}</span>` : ''}
+                ${m.location ? `<span class="meta-tag">${m.location}</span>` : ''}
+            </div>
+            ${m.description ? `<div class="desc">${m.description.substring(0, 200)}</div>` : ''}
+            <div class="mission-actions">
+                ${hasUrl ? `<a href="${m.url}" target="_blank" class="btn-open-link" onclick="event.stopPropagation();">${linkLabel}</a>` : ''}
+                ${isApi ? `<button class="btn-gen-docs" onclick="generateDocs(${m.index})">G\u00e9n\u00e9rer candidature</button>` : ''}
+            </div>
+        </div>
+    `;
 }
 
 async function generateDocs(missionIndex) {

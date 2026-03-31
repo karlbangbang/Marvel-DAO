@@ -28,17 +28,16 @@ from freelance_hunter.models import (
     RemotePolicy,
 )
 from freelance_hunter.scrapers import (
-    FreelanceComScraper,
-    FreelanceInfoScraper,
-    IndeedFreelanceScraper,
-    LinkedInScraper,
-    MaltScraper,
+    RemotiveScraper,
+    ArbeitnowScraper,
+    RemoteOKScraper,
+    generate_search_links,
 )
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "freelance-hunter-dev-key")
 
-# Stockage en mémoire pour la session (simplifié)
+# Stockage en mémoire pour la session
 _store: dict = {"profile": None, "missions": [], "packages": []}
 
 
@@ -60,29 +59,36 @@ def api_search():
     profile = _build_profile(data)
     _store["profile"] = profile
 
-    scrapers = [
-        MaltScraper(),
-        FreelanceComScraper(),
-        FreelanceInfoScraper(),
-        IndeedFreelanceScraper(),
-        LinkedInScraper(),
+    # ── 1. APIs réelles (offres avec vrais liens) ──
+    api_scrapers = [
+        RemotiveScraper(),
+        ArbeitnowScraper(),
+        RemoteOKScraper(),
     ]
 
-    all_missions = []
+    api_missions = []
     platform_results = []
 
-    for scraper in scrapers:
+    for scraper in api_scrapers:
         try:
-            missions = scraper.search(profile, max_results=6)
-            all_missions.extend(missions)
+            missions = scraper.search(profile, max_results=10)
+            api_missions.extend(missions)
             platform_results.append(
-                {"platform": scraper.PLATFORM_NAME, "count": len(missions), "ok": True}
+                {"platform": scraper.PLATFORM_NAME, "count": len(missions), "ok": len(missions) > 0}
             )
         except Exception as e:
             platform_results.append(
                 {"platform": scraper.PLATFORM_NAME, "count": 0, "ok": False, "error": str(e)}
             )
 
+    # ── 2. Liens de recherche directs (Malt, LinkedIn, Indeed, etc.) ──
+    search_links = generate_search_links(profile)
+    platform_results.append(
+        {"platform": "Liens directs (Malt, LinkedIn, Indeed...)", "count": len(search_links), "ok": True}
+    )
+
+    # ── Combiner et classer ──
+    all_missions = api_missions + search_links
     ranked = rank_missions(profile, all_missions)
     _store["missions"] = ranked
 
@@ -102,12 +108,18 @@ def api_search():
             "source": m.source,
             "url": m.url,
             "score": m.match_score,
+            "is_direct_link": m.source in (
+                "Malt", "Free-Work", "LinkedIn", "Indeed",
+                "Freelance-info", "Talent.com", "Upwork",
+            ),
         })
 
     return jsonify({
         "platforms": platform_results,
         "missions": missions_data,
         "total": len(ranked),
+        "api_count": len(api_missions),
+        "links_count": len(search_links),
     })
 
 
@@ -236,6 +248,7 @@ def _mission_card(m: Mission, p: FreelanceProfile) -> str:
         f"Titre      : {m.title}\n"
         f"Entreprise : {m.company}\n"
         f"Source     : {m.source}\n"
+        f"URL        : {m.url}\n"
         f"Budget     : {m.budget_min}-{m.budget_max} EUR/jour\n"
         f"Durée      : {m.duration}\n"
         f"Remote     : {m.remote_policy.value}\n"

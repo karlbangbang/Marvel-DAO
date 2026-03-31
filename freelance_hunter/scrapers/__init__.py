@@ -1,17 +1,15 @@
-"""Scrapers pour les plateformes freelance."""
+"""Scrapers et APIs pour les plateformes freelance."""
 
 from .base import BaseScraper
-from .malt import MaltScraper
-from .freelance_com import FreelanceComScraper
-from .freelance_info import FreelanceInfoScraper
-from .indeed import IndeedFreelanceScraper
-from .linkedin import LinkedInScraper
+from .remotive import RemotiveScraper
+from .arbeitnow import ArbeitnowScraper
+from .remoteok import RemoteOKScraper
+from .search_links import generate_search_links
 
 __all__ = [
     "BaseScraper",
-    "MaltScraper",
-    "FreelanceComScraper",
-    "FreelanceInfoScraper",
-    "IndeedFreelanceScraper",
-    "LinkedInScraper",
+    "RemotiveScraper",
+    "ArbeitnowScraper",
+    "RemoteOKScraper",
+    "generate_search_links",
 ]
